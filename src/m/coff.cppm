@@ -2,6 +2,7 @@ module;
 
 #include <array>
 #include <string_view>
+#include <vector>
 
 export module coff;
 import weretype;
@@ -9,9 +10,8 @@ import weretype;
 export namespace COFF {
 
 	enum struct Machine_e : u16 {
-		Unknown = 0x0000,
-		x86_64 = 0x8664, //AKA AMD64
-		arm_64 = 0xaa64,
+		Unknown = 0x0000, 
+		x86_64 = 0x8664, arm_64 = 0xaa64,
 		i386 = 0x014c,
 		r3000 = 0x0162,
 		r4000 = 0x0166,
@@ -45,6 +45,53 @@ export namespace COFF {
 		riscV128 = 0x5128,
 		loongArch32 = 0x6232,
 		loongArch64 = 0x6264,
+	};
+
+	struct Header {
+		Machine_e machine{};
+		u16 numberOfSections{};
+		u32 timeDateStamp{};
+		u32 pointerToSymbolTable{};
+		u32 numberOfSymbols{};
+		u16 sizeOfOptionalHeader{};
+		u16 characteristics{};
+	};
+	static_assert(sizeof(Header) == 20);
+
+	struct SectionHeader {
+		std::array<char, 8> name{};
+		u32 virtualSize{};
+		u32 virtualAddress{};
+		u32 sizeOfRawData{};
+		u32 pointerToRawData{};
+		u32 pointerToRelocations{};
+		u32 pointerToLineNumbers{};
+		u16 numberOfRelocations{};
+		u16 numberOfLineNumbers{};
+		u32 characteristics{};
+	};
+	static_assert(sizeof(SectionHeader) == 40);
+
+	struct Section {
+		SectionHeader header{};
+		std::vector<u8> data;
+	};
+
+	#pragma pack(push, 1)
+	struct Symbol {
+		std::array<char, 8> name{};
+		u32 value{};
+		i16 sectionNumber{};
+		u16 type{};
+		u8 storageClass{};
+		u8 numberOfAuxRecords{};
+	};
+	#pragma pack(pop)
+	static_assert(sizeof(Symbol) == 18);
+
+	struct StringTable {
+		u32 totalSize{};
+		std::vector<u8> data;
 	};
 
 	// Section characteristics
@@ -114,7 +161,7 @@ export namespace COFF {
 		std::string_view description;
 	};
 
-	inline constexpr auto sectionInfo = std::to_array<SectionInfo>({
+	inline constexpr auto sectionName = std::to_array<SectionInfo>({
 		{ ".text", "Executable code" },
 		{ ".bss", "Uninitialized data" },
 		{ ".rdata", "Read-only data" },
@@ -132,4 +179,3 @@ export namespace COFF {
 	});
 
 }
-

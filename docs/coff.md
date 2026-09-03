@@ -12,7 +12,7 @@ Characteristics (0x0000)
 Section header:
 
 Name (".text\0\0\0")
-PhysicalAddress/VirtualSize (0x00000000)
+VirtualSize (0x00000000)
 VirtualAddress (0x00000000)
 SizeOfRawData (0x00000006)
 PointerToRawData (0x0000003C)
