@@ -1,16 +1,18 @@
-.code
+format MS64 COFF
 
-PUBLIC strcmp
+section '.text' code readable executable
 
-strcmp PROC
+public strcmp
+
+strcmp:
 	;	Windows x64 calling convention:
 	;		1st arg -> rcx (const char* lhs)
 	;		2nd arg -> rdx (const char* rhs)
 	;		return value -> eax (int)
 
 compare_loop:
-	movzx eax, byte ptr [rcx]
-	movzx r8d, byte ptr [rdx]
+	movzx eax, byte [rcx]
+	movzx r8d, byte [rdx]
 
 	cmp eax, r8d
 	jne compare_done
@@ -29,7 +31,3 @@ compare_done:
 compare_equal:
 	xor eax, eax
 	ret
-
-strcmp ENDP
-
-END

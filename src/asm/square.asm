@@ -1,13 +1,12 @@
-.code
+format MS64 COFF
 
-PUBLIC square
+section '.text' code readable executable
 
-square PROC
-	; Windows x86_64 calling convention: the first int argument arrives in ecx.
+public square
+
+square:
+	; Windows x64 calling convention: the first int argument arrives in ecx.
 	; Integer return values are passed back in eax.
 	mov eax, ecx   ; Copy the input into the return-value register.
 	imul eax, ecx  ; eax = input * input.
 	ret            ; Return with the result in eax.
-square ENDP
-
-END
