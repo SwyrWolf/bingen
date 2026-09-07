@@ -16,7 +16,7 @@ main:
 	sub rsp, 40 ; Reserve 32 bytes (4 paramter convention) + and 8 bytes (return address).
 	lea rcx, [message]
 	call puts
-	xor eax, eax
+	xor eax, eax ; resets to 0 similar to (mov eax, 0) but `31 C0` instead of `B8 00 00 00 00`
 	add rsp, 40
 	ret
 
