@@ -1,5 +1,6 @@
 module;
 
+#include <cstddef>
 #include <ranges>
 #include <span>
 #include <utility>
@@ -56,16 +57,21 @@ export {
 
 
 export namespace were {
+	// thru(count) -- indices from zero up to, but excluding, count.
+	constexpr auto thru(std::size_t count) {
+		return std::views::iota(0uz, count);
+	}
+
 	// thru(R) -- Enumerate View -- wrapper for std::views::enumerate
 	#if defined(__APPLE__) || defined(__MACH__)
 		// fallback for Apple w/ LLVM Clang compiler and libc++ support
-		template <typename R>
+		template <std::ranges::viewable_range R>
 		constexpr auto thru(R&& range) {
 						return std::views::zip(std::views::iota(0uz), std::forward<R>(range));
 		}
 	#else
 		// Standard C++ implementation
-		template <typename R>
+		template <std::ranges::viewable_range R>
 		constexpr auto thru(R&& range) {
 			return std::views::enumerate(std::forward<R>(range));
 		}

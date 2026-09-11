@@ -49,8 +49,6 @@ files which are `.exe` or `.dll`
 | EFI bytecode | `0x0EBC` | Platform-independent EFI bytecode. |
 
 ---
----
----
 
 ## Section Header
 ### Section Header binary structure
@@ -68,8 +66,20 @@ files which are `.exe` or `.dll`
 | Number of line numbers | `0x0000` | No COFF line-number records are present. |
 | Characteristics | `0x60500020` | Combined flags defining the section as aligned, executable, readable code. |
 
-### Section Header Name Options
+```text
+00 [08] : BE<".text" 00 00 00>   // .text000
+08 [04] : DW LE<00 00 00 00>     // Virtual Size = 0
+0C [04] : DW LE<00 00 00 00>     // Virtual Address = 0
+10 [04] : DW LE<06 00 00 00>     // Size of Data = 6
+14 [04] : DW LE<3C 00 00 00>     // Pointer to Raw data = 0x3C = 60
+18 [04] : DW LE<00 00 00 00>     // Pointer to Relocations = 0
+1C [04] : DW LE<00 00 00 00>     // Pointer to Line Numbers = 0
+20 [02] : W  LE<00 00>           // Number of Line Numbers = 0
+24 [04] : DW LE<20 00 50 60>     // Characteristics = 0x60500020
+```
 
+### Section Header Name Options
+*standard names recognized by Windows PE/COFF*
 - `.text` — Executable machine code.
 - `.data` — Initialized, writable data.
 - `.rdata` — Initialized, read-only data such as constants and string literals.

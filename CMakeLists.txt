@@ -23,6 +23,7 @@ set(SOURCE_FILES src/main.cpp)
 set(MODULE_FILES
 	src/vend/weretype.cppm
 	src/m/coff.cppm
+	src/m/divdec.cppm
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
@@ -46,3 +47,14 @@ add_dependencies(bingen_test ${PROJECT_NAME})
 set_target_properties(bingen_test PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${TEST_OUTPUT_DIR}"
 )
+
+include(CTest)
+if (BUILD_TESTING)
+	add_executable(divdec_test src/divdec_test.cpp)
+	target_sources(divdec_test PRIVATE
+		FILE_SET cxx_modules TYPE CXX_MODULES FILES
+			src/vend/weretype.cppm
+			src/m/divdec.cppm
+	)
+	add_test(NAME divdec COMMAND divdec_test)
+endif()
