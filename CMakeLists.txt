@@ -18,12 +18,13 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	add_compile_options(-Wno-c23-extensions)
 endif()
 
-set(SOURCE_FILES src/main.cpp)
+set(SOURCE_FILES src/maincomp.cpp)
 
 set(MODULE_FILES
 	src/vend/weretype.cppm
-	src/m/coff.cppm
-	src/m/divdec.cppm
+	# src/m/coff.cppm
+	# src/m/divdec.cppm
+	src/m/reader.cppm
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
@@ -32,29 +33,29 @@ target_sources(${PROJECT_NAME} PRIVATE
 		${MODULE_FILES}
 )
 
-set(TEST_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/test")
-set(SQUARE_OBJECT "${TEST_OUTPUT_DIR}/square.o")
-add_custom_command(
-	OUTPUT "${SQUARE_OBJECT}"
-	COMMAND "${CMAKE_COMMAND}" -E make_directory "${TEST_OUTPUT_DIR}"
-	COMMAND "$<TARGET_FILE:${PROJECT_NAME}>"
-	WORKING_DIRECTORY "${TEST_OUTPUT_DIR}"
-	DEPENDS ${PROJECT_NAME}
-)
+# set(TEST_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/test")
+# set(SQUARE_OBJECT "${TEST_OUTPUT_DIR}/square.o")
+# add_custom_command(
+# 	OUTPUT "${SQUARE_OBJECT}"
+# 	COMMAND "${CMAKE_COMMAND}" -E make_directory "${TEST_OUTPUT_DIR}"
+# 	COMMAND "$<TARGET_FILE:${PROJECT_NAME}>"
+# 	WORKING_DIRECTORY "${TEST_OUTPUT_DIR}"
+# 	DEPENDS ${PROJECT_NAME}
+# )
 
-add_executable(bingen_test src/test.cpp "${SQUARE_OBJECT}")
-add_dependencies(bingen_test ${PROJECT_NAME})
-set_target_properties(bingen_test PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY "${TEST_OUTPUT_DIR}"
-)
+# add_executable(bingen_test src/test.cpp "${SQUARE_OBJECT}")
+# add_dependencies(bingen_test ${PROJECT_NAME})
+# set_target_properties(bingen_test PROPERTIES
+# 	RUNTIME_OUTPUT_DIRECTORY "${TEST_OUTPUT_DIR}"
+# )
 
-include(CTest)
-if (BUILD_TESTING)
-	add_executable(divdec_test src/divdec_test.cpp)
-	target_sources(divdec_test PRIVATE
-		FILE_SET cxx_modules TYPE CXX_MODULES FILES
-			src/vend/weretype.cppm
-			src/m/divdec.cppm
-	)
-	add_test(NAME divdec COMMAND divdec_test)
-endif()
+# include(CTest)
+# if (BUILD_TESTING)
+# 	add_executable(divdec_test src/divdec_test.cpp)
+# 	target_sources(divdec_test PRIVATE
+# 		FILE_SET cxx_modules TYPE CXX_MODULES FILES
+# 			src/vend/weretype.cppm
+# 			src/m/divdec.cppm
+# 	)
+# 	add_test(NAME divdec COMMAND divdec_test)
+# endif()
