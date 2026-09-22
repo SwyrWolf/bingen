@@ -22,6 +22,8 @@ set(SOURCE_FILES src/maincomp.cpp)
 
 set(MODULE_FILES
 	src/vend/weretype.cppm
+	src/vend/encoding/were.hex.cppm
+	src/vend/encoding/were.base64.cppm
 	# src/m/coff.cppm
 	# src/m/divdec.cppm
 	src/m/reader.cppm

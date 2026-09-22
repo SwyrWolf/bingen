@@ -1,7 +1,9 @@
 module;
 
 #include <cstddef>
+#include <string>
 #include <ranges>
+#include <expected>
 #include <span>
 #include <utility>
 
@@ -39,13 +41,11 @@ export {
 
 	// u8span() -- reads anything as a std::span<const u8>
 	template<class T>
-	concept byteRange =
-		std::ranges::contiguous_range<T>
-		&& std::ranges::sized_range<T>;
+	concept byteRange = std::ranges::contiguous_range<T> && std::ranges::sized_range<T>;
 
 	template<byteRange T>
 	[[nodiscard]] auto u8span(const T& input)
-	-> std::span<const u8> {
+-> std::span<const u8> {
 		using Elem = std::ranges::range_value_t<T>;
 
 		return {
@@ -57,6 +57,11 @@ export {
 
 
 export namespace were {
+
+	// Alias for std::expected<T,E>
+	template <typename T = void>
+	using Result = std::expected<T, std::string>;
+
 	// thru(count) -- indices from zero up to, but excluding, count.
 	constexpr auto thru(std::size_t count) {
 		return std::views::iota(0uz, count);
