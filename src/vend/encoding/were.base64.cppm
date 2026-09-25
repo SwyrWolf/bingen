@@ -6,7 +6,6 @@ module;
 #include <vector>
 #include <span>
 #include <ranges>
-#include <cassert>
 #include <array>
 
 export module were.base64;
@@ -44,9 +43,8 @@ export namespace were::base64 {
 		}
 
 		std::vector<u8> out;
-		out.resize((input.size() / 4) * 3 - padding);
+		out.reserve((input.size() / 4) * 3 - padding);
 
-		size_t outIndex{};
 		for (auto i : were::thru(input.size()) | std::views::stride(4)) {
 			u8 sextets[4]{};
 
@@ -67,9 +65,9 @@ export namespace were::base64 {
 			const u8 b1 = as<u8>(((sextets[1] & 0x0F) << 4) | (sextets[2] >> 2));
 			const u8 b2 = as<u8>(((sextets[2] & 0x03) << 6) | sextets[3]);
 
-			if (outIndex < out.size()) out[outIndex++] = b0;
-			if (outIndex < out.size()) out[outIndex++] = b1;
-			if (outIndex < out.size()) out[outIndex++] = b2;
+			out.push_back(b0);
+			if (input[i + 2] != '=') out.push_back(b1);
+			if (input[i + 3] != '=') out.push_back(b2);
 		}
 
 		return out;
@@ -78,44 +76,46 @@ export namespace were::base64 {
 	[[nodiscard]] constexpr auto encode(std::span<const u8> input) -> std::string {
 		if (input.empty()) return {};
 
-		const size_t fullGroups = input.size() / 3;
-		const size_t remainder = input.size() % 3;
+		const auto [fullGroups, remainder] = std::pair{ input.size() / 3, input.size() % 3 };
 
 		std::string out;
 		out.resize(((input.size() + 2) / 3) * 4);
 
-		size_t inIndex{};
-		size_t outIndex{};
+		for (const auto [indx, group] :
+			were::thru(
+				input
+				| std::views::take(fullGroups * 3)
+				| std::views::chunk(3)
+			)) {
+			const u32 value =
+				(as<u32>(group[0]) << 16) |
+				(as<u32>(group[1]) <<  8) |
+				as<u32>(group[2]);
 
-		for (size_t i = 0; i < fullGroups; ++i) {
-			const u8 b0 = input[inIndex++];
-			const u8 b1 = input[inIndex++];
-			const u8 b2 = input[inIndex++];
-
-			out[outIndex++] = Legend[b0 >> 2];
-			out[outIndex++] = Legend[((b0 & 0x03) << 4) | (b1 >> 4)];
-			out[outIndex++] = Legend[((b1 & 0x0F) << 2) | (b2 >> 6)];
-			out[outIndex++] = Legend[b2 & 0x3F];
+			for (const auto i : were::thru(4)) {
+				out[indx * 4 + i] = Legend[(value >> (18 - i * 6)) & 0b0011'1111];
+			}
 		}
 
-		if (remainder == 1) {
-			const u8 b0 = input[inIndex];
+		const auto inBase  = fullGroups * 3;
+		const auto outBase = fullGroups * 4;
 
-			out[outIndex++] = Legend[b0 >> 2];
-			out[outIndex++] = Legend[(b0 & 0x03) << 4];
-			out[outIndex++] = '=';
-			out[outIndex++] = '=';
-		} else if (remainder == 2) {
-			const u8 b0 = input[inIndex++];
-			const u8 b1 = input[inIndex];
+		if (remainder) {
+			u32 value{};
 
-			out[outIndex++] = Legend[b0 >> 2];
-			out[outIndex++] = Legend[((b0 & 0x03) << 4) | (b1 >> 4)];
-			out[outIndex++] = Legend[(b1 & 0x0F) << 2];
-			out[outIndex++] = '=';
+			for (const auto [i, byte] : were::thru(input | std::views::drop(inBase))) {
+				value |= as<u32>(byte) << (16 - i * 8);
+			}
+
+			out[outBase + 0] = Legend[value >> 18];
+			out[outBase + 1] = Legend[(value >> 12) & 0x3F];
+			out[outBase + 2] = Legend[(value >>  6) & 0x3F];
+			out[outBase + 3] = Legend[value & 0x3F];
+
+			for (const auto i : were::thru(3 - remainder))
+				out[out.size() - 1 - i] = '=';
 		}
 
-		assert(outIndex == out.size());
 		return out;
 	}
 }
