@@ -5,9 +5,9 @@ module;
 #include <expected>
 #include <vector>
 #include <span>
-#include <cassert>
 #include <ranges>
 #include <array>
+#include <algorithm>
 
 export module were.hex;
 import weretype;
@@ -39,7 +39,7 @@ export namespace were::hex {
 			auto low  = numeric(pair[1]);
 			if (!high || !low) return std::unexpected(Error::BadChar);
 
-			 out.push_back((*high << 4) | *low);
+			out.push_back(as<u8>((*high << 4) | *low));
 		}
 		return out;
 	}
@@ -63,7 +63,7 @@ namespace were::hex {
 	static_assert([] {
 		constexpr std::array<u8, 3> input{0x12, 0xAB, 0xFF};
 		return encode(input) == "12ABFF";
-	}(), "Hex encode test failed");;
+	}(), "Hex encode test failed");
 
 
 	static_assert([] {
@@ -77,4 +77,20 @@ namespace were::hex {
 		auto result = decode("GG");
 		return !result && result.error() == Error::BadChar;
 	}(), "Invalid decode input test failed");
+
+	static_assert([] {
+		auto empty = decode("");
+		auto odd = decode("ABC");
+		auto mixed = decode("aBcD");
+		return empty && empty->empty() && encode(std::span<const u8>{}).empty()
+			&& !odd && odd.error() == Error::BadLength
+			&& mixed && *mixed == std::vector<u8>{0xAB, 0xCD};
+	}(), "Hex empty, odd-length, and mixed-case test failed");
+
+	static_assert([] {
+		std::array<u8, 256> bytes{};
+		for (auto [i, value] : were::thru(bytes)) value = as<u8>(i);
+		auto result = decode(encode(bytes));
+		return result && std::ranges::equal(*result, bytes);
+	}(), "Hex round trip must preserve every byte value");
 }

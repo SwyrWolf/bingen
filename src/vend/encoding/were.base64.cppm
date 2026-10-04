@@ -7,6 +7,8 @@ module;
 #include <span>
 #include <ranges>
 #include <array>
+#include <algorithm>
+#include <utility>
 
 export module were.base64;
 import weretype;
@@ -25,7 +27,7 @@ export namespace were::base64 {
 		const auto pos = Legend.find(ch);
 		if (pos == std::string_view::npos) return std::unexpected(Error::BadChar);
 
-    return as<u8>(pos);
+		return as<u8>(pos);
 	}
 
 	[[nodiscard]] constexpr auto decode(std::string_view input) -> std::expected<std::vector<u8>, Error> {
@@ -45,11 +47,11 @@ export namespace were::base64 {
 		std::vector<u8> out;
 		out.reserve((input.size() / 4) * 3 - padding);
 
-		for (auto i : were::thru(input.size()) | std::views::stride(4)) {
-			u8 sextets[4]{};
+		for (auto group : input | std::views::chunk(4)) {
+			std::array<u8, 4> sextets{};
 
 			for (auto x : were::thru(4)) {
-				const char ch = input[i + x];
+				const char ch = group[x];
 				if (ch == '=') {
 					sextets[x] = 0;
 					continue;
@@ -66,8 +68,8 @@ export namespace were::base64 {
 			const u8 b2 = as<u8>(((sextets[2] & 0x03) << 6) | sextets[3]);
 
 			out.push_back(b0);
-			if (input[i + 2] != '=') out.push_back(b1);
-			if (input[i + 3] != '=') out.push_back(b2);
+			if (group[2] != '=') out.push_back(b1);
+			if (group[3] != '=') out.push_back(b2);
 		}
 
 		return out;
@@ -168,4 +170,15 @@ namespace were::base64 {
 		}
 		return true;
 	}(), "Base64 invalid padding test failed");
+
+	static_assert([] {
+		std::array<u8, 256> bytes{};
+		for (auto [i, value] : were::thru(bytes)) value = as<u8>(i);
+		for (auto length : {254uz, 255uz, 256uz}) {
+			const auto input = std::span{bytes}.first(length);
+			auto result = decode(encode(input));
+			if (!result || !std::ranges::equal(*result, input)) return false;
+		}
+		return true;
+	}(), "Base64 round trip must preserve every byte value and padding length");
 }

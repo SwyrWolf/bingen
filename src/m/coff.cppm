@@ -1,8 +1,12 @@
 module;
 
 #include <array>
+#include <cstddef>
 #include <string_view>
 #include <vector>
+#include <concepts>
+#include <type_traits>
+#include <utility>
 
 export module coff;
 import weretype;
@@ -56,7 +60,6 @@ export namespace COFF {
 		u16 sizeOfOptionalHeader{};
 		u16 characteristics{};
 	};
-	static_assert(sizeof(Header) == 20);
 
 	struct SectionHeader {
 		std::array<char, 8> name{};
@@ -70,7 +73,6 @@ export namespace COFF {
 		u16 numberOfLineNumbers{};
 		u32 characteristics{};
 	};
-	static_assert(sizeof(SectionHeader) == 40);
 
 	struct Section {
 		SectionHeader header{};
@@ -87,7 +89,6 @@ export namespace COFF {
 		u8 numberOfAuxRecords{};
 	};
 	#pragma pack(pop)
-	static_assert(sizeof(Symbol) == 18);
 
 	struct StringTable {
 		u32 totalSize{};
@@ -150,8 +151,12 @@ export namespace COFF {
 
 		template <typename... Characteristic>
 		requires (sizeof...(Characteristic) > 0)
+			&& ((std::same_as<Characteristic, SectionContent_e>
+				|| std::same_as<Characteristic, SectionLinker_e>
+				|| std::same_as<Characteristic, SectionAlignment_e>
+				|| std::same_as<Characteristic, SectionMemory_e>) && ...)
 		constexpr SectionCharacteristics(Characteristic... characteristic)
-			: value((as<u32>(characteristic) | ...)) {}
+			: value((as<u32>(std::to_underlying(characteristic)) | ...)) {}
 	};
 
 	// Section metadata
@@ -178,4 +183,18 @@ export namespace COFF {
 		{ ".cormeta", "CLR metadata" },
 	});
 
+}
+
+// [Static Assert Testing]
+namespace COFF {
+	static_assert(sizeof(Header) == 20 && offsetof(Header, characteristics) == 18);
+	static_assert(sizeof(SectionHeader) == 40 && offsetof(SectionHeader, characteristics) == 36);
+	static_assert(sizeof(Symbol) == 18 && offsetof(Symbol, storageClass) == 16);
+	static_assert(std::is_trivially_copyable_v<Header>
+		&& std::is_trivially_copyable_v<SectionHeader> && std::is_trivially_copyable_v<Symbol>);
+	static_assert(SectionCharacteristics{SectionContent_e::ContainsCode,
+		SectionAlignment_e::Align16Bytes, SectionMemory_e::MemoryExecute,
+		SectionMemory_e::MemoryRead}.value == 0x60500020);
+	static_assert(SectionCharacteristics{}.value == 0);
+	static_assert(!std::constructible_from<SectionCharacteristics, int>);
 }
